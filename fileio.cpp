@@ -7,36 +7,22 @@
 
 using namespace std;
 
-
+//---------------
+//STRUCT GLOBAL
+//---------------
 struct person{
     char Name[50];
     float Balance;
 };
 
+//wipe the buffer up to newline
 void * clearStream(){
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 }
-/*char * readData(fstream& rw){
-    //clear flags
-    rw.clear();
-    //set position to the end
-    rw.seekg(0, rw.end);
-    //call end position as an int to get length
-    int length = rw.tellg();
-    //reset position to beginning
-    rw.seekg(0, rw.beg);
 
-    //char to read the file into with + 1 length
-    //because read does not append null terminator
-    char * buffer = new char [length + 1];
-    rw.read(buffer, length);
-
-    //append null terminator
-    buffer[length + 1] = '\0';
-    return buffer;
-}*/
-
-
+//---------------
+//READ FILE OUT TO STRUCT PERSON ARRAY
+//---------------
 void * fileToStruct(person p[], fstream& rw){
     rw.clear();
     rw.seekg(0, rw.beg);
@@ -53,7 +39,9 @@ void * fileToStruct(person p[], fstream& rw){
     }
 }
 
-
+//---------------
+//DISPLAY EACH ITEM IN STRUCT ARRAY AS CUSTOMER DATA
+//---------------
 void display(person p[], int n){
     //easy string for spacing
     string spacer = string(12, ' ');
@@ -66,14 +54,16 @@ void display(person p[], int n){
     cout << string(47, '-') << endl;
 }
 
-
+//displays options menu
 void menu(){
     cout << "1. Find the Highest Balance" << endl;
     cout << "2. Make a Deposit" << endl;
     cout << "3. Exit" << endl;
 }
 
-
+//---------------
+//FIND THE ACCOUNT WITH HIGHEST BALANCE
+//---------------
 void FindRichest(person p[], int n){
     //value to hold the index of the current richest customer
     int richest = 0;
@@ -87,7 +77,9 @@ void FindRichest(person p[], int n){
     cout << "\nThe customer with maximum balance is " << p[richest].Name << '\n' << '\n';
 }
 
-
+//---------------
+//"DEPOSIT" MONEY TO AN ACCOUNT
+//---------------
 void * Deposit(string yourName, person p[], int n){
     double amount;
     //int to hold the index of the matched customer
@@ -127,6 +119,10 @@ void * Deposit(string yourName, person p[], int n){
     }
     
 }
+
+//---------------
+//WRITE NEW ARRAY DATA BACK TO FILE
+//---------------
 void NewCopy(string filename, person p[], int n){
     //open an fstream and truncate the file
     fstream ww(filename, std::fstream::out | std::fstream::trunc);
@@ -158,8 +154,6 @@ int main(){
     fileToStruct(p, rw);
     //close the file for now
     rw.close();
-    //display the data once
-    //display(p, n);
 
 
     //create a loop that displays account balances, a menu, and asks for input
