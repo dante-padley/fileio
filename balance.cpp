@@ -21,28 +21,42 @@ void * clearStream(){
 }
 
 //---------------
-//READ FILE OUT TO STRUCT PERSON ARRAY
+//READ FILE OUT TO STRUCT PERSON ARRAY AND RETURN POINTER TO IT
 //---------------
-void * fileToStruct(person p[], fstream& rw){
-    rw.clear();
+person * readData(int & n);
+person * readData(int & n){
+    person * ptr = new person[n];
+    string filename = "data.txt";
+    fstream rw;
+    rw.open(filename);
     rw.seekg(0, rw.beg);
-    //int peeker = rw.peek();
     int i = 0;
-    while (!rw.eof()){
-        string name, lname;
-        float blnc;
-        rw >> name >> lname >> blnc;
-        name = name + ' ' + lname;
-        strcpy(p[i].Name, name.c_str());
-        p[i].Balance = blnc;
+
+    string fname, lname;
+    float blnc;
+    while (rw >> fname >> lname >> blnc){
+         //first name needs to be 9 characters
+        fname = fname.substr(0, 9);
+        //last name needs to be 10 characters
+        lname = lname.substr(0, 10);
+        //fullname assignment/concatenation
+        string name = fname + ' ' + lname;
+
+        //copy fullname to struct name, which is char
+        strcpy(ptr[i].Name, name.c_str());
+
+        //assign the struct's balance variable
+        ptr[i].Balance = blnc;
         i++;
     }
+    rw.close();
+    return ptr;
 }
 
 //---------------
 //DISPLAY EACH ITEM IN STRUCT ARRAY AS CUSTOMER DATA
 //---------------
-void display(person p[], int n){
+void display(person * p, int n){
     //easy string for spacing
     string spacer = string(12, ' ');
 
@@ -56,15 +70,17 @@ void display(person p[], int n){
 
 //displays options menu
 void menu(){
-    cout << "1. Find the Highest Balance" << endl;
-    cout << "2. Make a Deposit" << endl;
-    cout << "3. Exit" << endl;
+    cout << "1. Display all accounts" << endl;
+    cout << "2. Find the Highest Balance" << endl;
+    cout << "3. Make a Deposit" << endl;
+    cout << "4. Save to the file" << endl;
+    cout << "5. Exit" << endl;
 }
 
 //---------------
 //FIND THE ACCOUNT WITH HIGHEST BALANCE
 //---------------
-void FindRichest(person p[], int n){
+void FindRichest(person * p, int n){
     //value to hold the index of the current richest customer
     int richest = 0;
     for (int i = 0; i < n; i++){
@@ -80,15 +96,30 @@ void FindRichest(person p[], int n){
 //---------------
 //"DEPOSIT" MONEY TO AN ACCOUNT
 //---------------
-void * Deposit(string yourName, person p[], int n){
-    double amount;
-    //int to hold the index of the matched customer
+void Deposit(person * p, int n, string custName, double amount){
+
     int indexOfCust = -1;
     for (int i = 0; i < n; i++){
         //convert cstring to string
         string pNameStr = p[i].Name;
         //compare strings
-        if (yourName == pNameStr){
+        if (custName == pNameStr){
+            indexOfCust = i;
+        }
+    }
+    p[indexOfCust].Balance += amount;
+    cout << p[indexOfCust].Name << " your new balance is " << p[indexOfCust].Balance << endl;    
+}
+
+
+//Helper to grab customer deposit information
+void preDeposit(person * p, int n, string custName, double &amount, bool &isValid){
+    int indexOfCust = -1;
+    for (int i = 0; i < n; i++){
+        //convert cstring to string
+        string pNameStr = p[i].Name;
+        //compare strings
+        if (custName == pNameStr){
             indexOfCust = i;
         }
     }
@@ -103,9 +134,7 @@ void * Deposit(string yourName, person p[], int n){
         cin >> amount;
         //make sure input doesn't break everything
         if (!cin.fail()){
-            //add amount to customer balance
-            p[indexOfCust].Balance += amount;
-            cout << p[indexOfCust].Name << " your new balance is " << p[indexOfCust].Balance << endl;
+            isValid = true;
             clearStream();
         }
         //they put a letter or something for the amount
@@ -117,13 +146,13 @@ void * Deposit(string yourName, person p[], int n){
         }
         
     }
-    
 }
+
 
 //---------------
 //WRITE NEW ARRAY DATA BACK TO FILE
 //---------------
-void NewCopy(string filename, person p[], int n){
+void NewCopy(string filename, person * p, int n){
     //open an fstream and truncate the file
     fstream ww(filename, std::fstream::out | std::fstream::trunc);
     for (int i = 0; i < n; i++){
@@ -131,6 +160,7 @@ void NewCopy(string filename, person p[], int n){
         ww << p[i].Name << " " << p[i].Balance << endl;
     }
     ww.close();
+    cout << "File Updated..." << endl;
 
 
 }
@@ -146,21 +176,17 @@ int main(){
     while (rw >> word){
         count++;
     }
-    //find number of people listed in file
-    int n = count / 3;
-    //initialize struct array with size n
-    person p [n];
-    //read file contents to the struct
-    fileToStruct(p, rw);
     //close the file for now
     rw.close();
-
-
+    //find number of people listed in file
+    int n = count / 3;
+    //read file data to an array of type struct and return a pointer to the array
+    person * personPtr = readData(n);
+    
     //create a loop that displays account balances, a menu, and asks for input
     char k;   
-    while (k != '3'){
-        //Display all accounts
-        display(p, n);
+    while (k != '5'){
+        
         //Display the menu
         menu();
         //Ask user to pick a menu item
@@ -168,20 +194,37 @@ int main(){
         cin >> k;
         clearStream();
         if(k == '1'){
-            //Find the highest balance
-            FindRichest(p, n);
+            //Display all accounts
+            display(personPtr, n);
         }
         else if(k == '2'){
-            //Ask for name first
-            string yourName;
-            cout << "Enter your full name to deposit money: ";
-            getline(cin, yourName);
-            //Deposit Flow
-            Deposit(yourName, p, n);
-            //Update the txt file
-            NewCopy(filename, p, n);
+            //Find the highest balance
+            FindRichest(personPtr, n);
         }
         else if(k == '3'){
+            //Ask for name first
+            string custName;
+            double amount;
+            bool isValid = false;
+            cout << "Enter your full name to deposit money: ";
+            getline(cin, custName);
+            //Deposit Flow
+            preDeposit(personPtr, n, custName, amount, isValid);
+            //if name and amount are both valid
+            if (isValid){
+                //process the deposit
+                Deposit(personPtr, n, custName, amount);
+            }
+            //Update the txt file
+            //NewCopy(filename, personPtr, n);
+        }
+        else if(k == '4'){
+            //Update the txt file
+            NewCopy(filename, personPtr, n);
+        }
+        else if(k == '5'){
+            //clear out the "new" person array we created earlier
+            delete [] personPtr;
             //exit option
             cout << "Goodbye" << endl;   
         }
@@ -191,6 +234,6 @@ int main(){
         }
     }
 
-
+    
     return 0;
 }

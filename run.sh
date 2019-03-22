@@ -1,1 +1,1 @@
-g++ -o fileio fileio.cpp
+g++ -o balance balance.cpp
